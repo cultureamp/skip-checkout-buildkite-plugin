@@ -1,0 +1,14 @@
+steps:
+  - label: ":lint-roller: Lint"
+    plugins:
+      - docker-compose#v3.3.0:
+          run: lint
+  - label: ":karate: Tests"
+    plugins:
+      - docker-compose#v3.3.0:
+          run: tests
+  - label: ":shell::heavy_check_mark: Shellcheck"
+    plugins:
+      - shellcheck#v1.1.2:
+          files:
+            - 'hooks/*'

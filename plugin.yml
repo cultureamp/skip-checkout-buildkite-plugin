@@ -1,0 +1,8 @@
+name: Skip Checkout
+description: Skips checkout for a step
+author: https://github.com/cultureamp
+requirements: []
+configuration:
+  properties: {}
+  required: []
+  additionalProperties: false
