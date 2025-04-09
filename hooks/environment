@@ -2,6 +2,5 @@
 
 set -euo pipefail
 
-echo '--- Skipping git checkout'
-
+echo 'Skipping git checkout'
 export BUILDKITE_REPO=""
