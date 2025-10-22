@@ -4,17 +4,24 @@ set -euo pipefail
 
 echo '--- Setting clone flags'
 
-echo "current settings:"
-echo "BUILDKITE_GIT_CLONE_MIRROR_FLAGS=${BUILDKITE_GIT_CLONE_MIRROR_FLAGS:-}"
-echo "BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:-}"
-echo "BUILDKITE_GIT_FETCH_FLAGS=${BUILDKITE_GIT_FETCH_FLAGS:-}"
+echo "current settings:
+BUILDKITE_GIT_MIRRORS_PATH=${BUILDKITE_GIT_MIRRORS_PATH:-}
+BUILDKITE_GIT_CLONE_MIRROR_FLAGS=${BUILDKITE_GIT_CLONE_MIRROR_FLAGS:-}
+
+BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:-}
+BUILDKITE_GIT_FETCH_FLAGS=${BUILDKITE_GIT_FETCH_FLAGS:-}
+"
+
+
+
 
 # echo "blobby"
 # export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --mirror --filter=blob:none"
 
 echo "disable mirrors for this build"
-export BUILDKITE_GIT_MIRRORS_PATH=""
-export BUILDKITE_GIT_CLONE_FLAGS="-v --filter=blob:none"
+unset BUILDKITE_GIT_MIRRORS_PATH
+export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --filter=blob:none"
+export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
 
 # defaults
 # BUILDKITE_GIT_CLONE_MIRROR_FLAGS=-v
