@@ -27,3 +27,7 @@ export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
 # BUILDKITE_GIT_CLONE_MIRROR_FLAGS=-v
 # BUILDKITE_GIT_CLONE_FLAGS=-v --dissociate
 # BUILDKITE_GIT_FETCH_FLAGS=-v --prune
+
+echo "Starting timer for experimental checkout"
+timestamp=$(date +%s)
+export CHECKOUT_START_TIME="$timestamp"

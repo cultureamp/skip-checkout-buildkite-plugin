@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+#
+# Output of this script is written to the agent log (Cloudwatch) only.
+#
+# It is NOT visible in the Buildkite UI.
+#
+
+function send_git_checkout_data () {
+  aws cloudwatch put-metric-data \
+    --namespace Buildkite \
+    --metric-name GitCheckoutDuration \
+    --region us-west-2 \
+    --dimensions "Repo=${BUILDKITE_REPO}, IsExperimental=true" \
+    --value "$1" \
+    --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+
+echo "Ending timer for checkout"
+timestamp=$(date +%s)
+export CHECKOUT_END_TIME="$timestamp"
+
+checkout_duration=$((CHECKOUT_END_TIME - CHECKOUT_START_TIME))
+
+send_git_checkout_data "$checkout_duration"
