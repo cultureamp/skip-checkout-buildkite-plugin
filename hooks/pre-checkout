@@ -28,6 +28,12 @@ export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
 # BUILDKITE_GIT_CLONE_FLAGS=-v --dissociate
 # BUILDKITE_GIT_FETCH_FLAGS=-v --prune
 
+sanitise_github_url() {
+    local url="$1"
+    local sanitized="${url//[^a-zA-Z0-9]/-}"
+    echo "$sanitized"
+}
+
 echo "Starting timer for experimental checkout"
 timestamp=$(date +%s)
 export CHECKOUT_START_TIME="$timestamp"
