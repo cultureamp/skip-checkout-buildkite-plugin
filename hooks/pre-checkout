@@ -48,8 +48,11 @@ has_git_commit() {
 repo_dir_leaf=$(sanitise_github_url "${BUILDKITE_REPO}")
 mirror_dir="${BUILDKITE_GIT_MIRRORS_PATH}/${repo_dir_leaf}"
 
-# TODO: capture the output as a variable and log it to Cloudwatch in the post-checkout hook
-has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"
+if has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"; then
+    export HAS_GIT_COMMIT="true"
+else
+    export HAS_GIT_COMMIT="false"
+fi
 
 echo "Starting timer for experimental checkout"
 timestamp=$(date +%s)
