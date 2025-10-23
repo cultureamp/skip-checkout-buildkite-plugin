@@ -12,21 +12,44 @@ BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:-}
 BUILDKITE_GIT_FETCH_FLAGS=${BUILDKITE_GIT_FETCH_FLAGS:-}
 "
 
-echo "disable mirrors for this build"
-unset BUILDKITE_GIT_MIRRORS_PATH
-export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --filter=blob:none"
-export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
+# echo "disable mirrors for this build"
+# unset BUILDKITE_GIT_MIRRORS_PATH
+# export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --filter=blob:none"
+# export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
 
 # defaults
 # BUILDKITE_GIT_CLONE_MIRROR_FLAGS=-v
 # BUILDKITE_GIT_CLONE_FLAGS=-v --dissociate
 # BUILDKITE_GIT_FETCH_FLAGS=-v --prune
 
+# Converts Github url into a filesystem-safe string: e.g. "https---github-com-cultureamp-murmur-git"
 sanitise_github_url() {
     local url="$1"
     local sanitized="${url//[^a-zA-Z0-9]/-}"
     echo "$sanitized"
 }
+
+# Determines whether or not a mirror exists and has the specific commit used in the current build
+# When both conditions are met, we can consider this a "warm clone" since it has been previously cloned
+# Otherwise, it is considered a "cold clone".
+# Lifted from: https://github.com/buildkite/agent/blob/a4dffdbed6b36623d52dfa1e2b3d677d6c53a96a/internal/job/checkout.go#L334
+has_git_commit() {
+    local mirror_dir="$1"
+    local commit="$2"
+
+    if git --git-dir "${mirror_dir}""${sanitise_github_url}" rev-parse "${commit}^{commit}" >/dev/null 2>&1; then
+        echo "warm clone detected - commit ${commit} exists in mirror"
+        return 0
+    else
+        return 1
+    fi
+}
+
+repo_dir_leaf=$(sanitise_github_url "${BUILDKITE_REPO}")
+mirror_dir="${BUILDKITE_GIT_MIRRORS_PATH}/${repo_dir_leaf}"
+
+# TODO: capture the output as a variable and log it to Cloudwatch in the post-checkout hook
+has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"
 
 echo "Starting timer for experimental checkout"
 timestamp=$(date +%s)
