@@ -12,12 +12,6 @@ BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:-}
 BUILDKITE_GIT_FETCH_FLAGS=${BUILDKITE_GIT_FETCH_FLAGS:-}
 "
 
-
-
-
-# echo "blobby"
-# export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --mirror --filter=blob:none"
-
 echo "disable mirrors for this build"
 unset BUILDKITE_GIT_MIRRORS_PATH
 export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --filter=blob:none"

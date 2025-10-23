@@ -12,7 +12,7 @@ function send_git_checkout_data () {
     --namespace Buildkite \
     --metric-name GitCheckoutDuration \
     --region us-west-2 \
-    --dimensions "Repo=${BUILDKITE_REPO}, IsExperimental=true" \
+    --dimensions "Repo=${BUILDKITE_REPO}, Pipeline=${BUILDKITE_PIPELINE_SLUG} IsExperimental=true" \
     --value "$1" \
     --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
