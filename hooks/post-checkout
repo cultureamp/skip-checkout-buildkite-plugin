@@ -12,7 +12,7 @@ function send_git_checkout_data () {
     --namespace Buildkite \
     --metric-name GitCheckoutDuration \
     --region us-west-2 \
-    --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental=true,HasGitCommit="${HAS_GIT_COMMIT:-unknown}" \
+    --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental="${IS_EXPERIMENTAL}",HasGitCommit="${HAS_GIT_COMMIT:-unknown}" \
     --value "$1" \
     --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
@@ -23,5 +23,11 @@ timestamp=$(date +%s)
 export CHECKOUT_END_TIME="$timestamp"
 
 checkout_duration=$((CHECKOUT_END_TIME - CHECKOUT_START_TIME))
+
+if [ "${BUILDKITE_GIT_CLONE_FLAGS:-}" = "-v --dissociate" ]; then
+    IS_EXPERIMENTAL="false"
+else
+    IS_EXPERIMENTAL="true"
+fi
 
 send_git_checkout_data "$checkout_duration"
