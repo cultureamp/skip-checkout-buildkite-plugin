@@ -37,7 +37,7 @@ has_git_commit() {
     local mirror_dir="$1"
     local commit="$2"
 
-    if git --git-dir "${mirror_dir}""${sanitise_github_url}" rev-parse "${commit}^{commit}" >/dev/null 2>&1; then
+    if git --git-dir "${mirror_dir}" rev-parse "${commit}^{commit}" >/dev/null 2>&1; then
         echo "warm clone detected - commit ${commit} exists in mirror"
         return 0
     else

@@ -12,12 +12,13 @@ function send_git_checkout_data () {
     --namespace Buildkite \
     --metric-name GitCheckoutDuration \
     --region us-west-2 \
-    --dimensions "Repo=${BUILDKITE_REPO}, Pipeline=${BUILDKITE_PIPELINE_SLUG} IsExperimental=true, HasGitCommit=${HAS_GIT_COMMIT:-unknown}" \
+    --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental=true,HasGitCommit="${HAS_GIT_COMMIT:-unknown}" \
     --value "$1" \
     --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 
 echo "Ending timer for checkout"
+echo "BUILDKITE_REPO=${BUILDKITE_REPO}"
 timestamp=$(date +%s)
 export CHECKOUT_END_TIME="$timestamp"
 
