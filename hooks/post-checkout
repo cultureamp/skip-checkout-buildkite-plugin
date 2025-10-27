@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+
+# Push git checkout data to Cloudwatch. Output is written to the Cloudwatch agent log.
+# It is NOT visible in the Buildkite UI.
+send_git_checkout_data() {
+    local is_experimental="${1}"
+    local warm_clone="${2}"
+    local checkout_duration="${3}"
+
+    aws cloudwatch put-metric-data \
+        --namespace Buildkite \
+        --metric-name GitCheckoutDuration \
+        --region us-west-2 \
+        --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental="${is_experimental}",WarmClone="${warm_clone:-unknown}" \
+        --value "${checkout_duration}" \
+        --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+
+echo "Ending timer for checkout"
+timestamp
+timestamp="$(date +%s)"
+export CHECKOUT_END_TIME="${timestamp}"
+
+checkout_duration
+checkout_duration="$((CHECKOUT_END_TIME - CHECKOUT_START_TIME))"
+
+
+if [[ "${BUILDKITE_GIT_CLONE_FLAGS:-}" == "-v --dissociate" ]]; then
+is_experimental="false"
+else
+is_experimental="true"
+fi
+
+# Ignore SC2153, the variable is defined and exported in the pre-checkout hook
+# shellcheck disable=SC2153
+send_git_checkout_data "${is_experimental}" "${WARM_CLONE}" "${checkout_duration}"

@@ -1,7 +1,52 @@
 #!/bin/bash
-
 set -euo pipefail
 
-echo '--- Skipping git checkout'
+readonly EXPERIMENTAL_CLONE_FLAGS="${EXPERIMENTAL_CLONE_FLAGS:-}"
+readonly EXPERIMENTAL_CLONE_MIRROR_FLAGS="${EXPERIMENTAL_CLONE_MIRROR_FLAGS:-}"
 
-export BUILDKITE_REPO=""
+# Converts Github url into a filesystem-safe string: e.g. "https---github-com-cultureamp-murmur-git"
+sanitise_github_url() {
+  local url="$1"
+  local sanitized="${url//[^a-zA-Z0-9]/-}"
+  echo "Sanitised URL: ${sanitized}"
+}
+
+# Determines whether or not a mirror exists and has the specific commit used in the current build
+# When both conditions are met, we can consider this a "warm clone" since it has been previously cloned
+# Otherwise, it is considered a "cold clone".
+# Lifted from: https://github.com/buildkite/agent/blob/a4dffdbed6b36623d52dfa1e2b3d677d6c53a96a/internal/job/checkout.go#L334
+has_git_commit() {
+    local mirror_dir="$1"
+    local commit="$2"
+
+    if git --git-dir "${mirror_dir}" rev-parse "${commit}^{commit}" >/dev/null 2>&1; then
+        echo "warm clone detected - commit ${commit} exists in mirror"
+        return 0
+    else
+        return 1
+    fi
+}
+
+if [[ -n "${EXPERIMENTAL_CLONE_FLAGS}" ]]; then
+    echo "Using experimental clone flags: ${EXPERIMENTAL_CLONE_FLAGS}"
+    export BUILDKITE_GIT_CLONE_FLAGS="${EXPERIMENTAL_CLONE_FLAGS}"
+fi
+if [[ -n "${EXPERIMENTAL_CLONE_MIRROR_FLAGS}" ]]; then
+    echo "Using experimental clone mirror flags: ${EXPERIMENTAL_CLONE_MIRROR_FLAGS}"
+    export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="${EXPERIMENTAL_CLONE_MIRROR_FLAGS}"
+fi
+
+# Preparation work for measuring impact of git clone and git mirror configurations
+repo_dir_leaf="$(sanitise_github_url "${BUILDKITE_REPO}")"
+mirror_dir="${BUILDKITE_GIT_MIRRORS_PATH}/${repo_dir_leaf}"
+
+if has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"; then
+    export WARM_CLONE="true"
+else
+    export WARM_CLONE="false"
+fi
+
+echo "Starting timer for git checkout"
+timestamp
+timestamp="$(date +%s)"
+export CHECKOUT_START_TIME="${timestamp}"
