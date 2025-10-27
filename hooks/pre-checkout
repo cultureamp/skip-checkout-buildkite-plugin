@@ -49,9 +49,9 @@ repo_dir_leaf=$(sanitise_github_url "${BUILDKITE_REPO}")
 mirror_dir="${BUILDKITE_GIT_MIRRORS_PATH}/${repo_dir_leaf}"
 
 if has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"; then
-    export HAS_GIT_COMMIT="true"
+    export WARM_CLONE="true"
 else
-    export HAS_GIT_COMMIT="false"
+    export WARM_CLONE="false"
 fi
 
 echo "Starting timer for experimental checkout"
