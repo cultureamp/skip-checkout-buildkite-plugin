@@ -1,32 +1,14 @@
 #!/bin/bash
-
 set -euo pipefail
 
-echo '--- Setting clone flags'
-
-echo "current settings:
-BUILDKITE_GIT_MIRRORS_PATH=${BUILDKITE_GIT_MIRRORS_PATH:-}
-BUILDKITE_GIT_CLONE_MIRROR_FLAGS=${BUILDKITE_GIT_CLONE_MIRROR_FLAGS:-}
-
-BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:-}
-BUILDKITE_GIT_FETCH_FLAGS=${BUILDKITE_GIT_FETCH_FLAGS:-}
-"
-
-# echo "disable mirrors for this build"
-# unset BUILDKITE_GIT_MIRRORS_PATH
-# export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="-v --filter=blob:none"
-# export BUILDKITE_GIT_CLONE_FLAGS="-v --dissociate --filter=blob:none"
-
-# defaults
-# BUILDKITE_GIT_CLONE_MIRROR_FLAGS=-v
-# BUILDKITE_GIT_CLONE_FLAGS=-v --dissociate
-# BUILDKITE_GIT_FETCH_FLAGS=-v --prune
+readonly EXPERIMENTAL_CLONE_FLAGS="${EXPERIMENTAL_CLONE_FLAGS:-}"
+readonly EXPERIMENTAL_CLONE_MIRROR_FLAGS="${EXPERIMENTAL_CLONE_MIRROR_FLAGS:-}"
 
 # Converts Github url into a filesystem-safe string: e.g. "https---github-com-cultureamp-murmur-git"
 sanitise_github_url() {
-    local url="$1"
-    local sanitized="${url//[^a-zA-Z0-9]/-}"
-    echo "$sanitized"
+  local url="$1"
+  local sanitized="${url//[^a-zA-Z0-9]/-}"
+  echo "Sanitised URL: ${sanitized}"
 }
 
 # Determines whether or not a mirror exists and has the specific commit used in the current build
@@ -45,7 +27,17 @@ has_git_commit() {
     fi
 }
 
-repo_dir_leaf=$(sanitise_github_url "${BUILDKITE_REPO}")
+if [[ -n "${EXPERIMENTAL_CLONE_FLAGS}" ]]; then
+    echo "Using experimental clone flags: ${EXPERIMENTAL_CLONE_FLAGS}"
+    export BUILDKITE_GIT_CLONE_FLAGS="${EXPERIMENTAL_CLONE_FLAGS}"
+fi
+if [[ -n "${EXPERIMENTAL_CLONE_MIRROR_FLAGS}" ]]; then
+    echo "Using experimental clone mirror flags: ${EXPERIMENTAL_CLONE_MIRROR_FLAGS}"
+    export BUILDKITE_GIT_CLONE_MIRROR_FLAGS="${EXPERIMENTAL_CLONE_MIRROR_FLAGS}"
+fi
+
+# Preparation work for measuring impact of git clone and git mirror configurations
+repo_dir_leaf="$(sanitise_github_url "${BUILDKITE_REPO}")"
 mirror_dir="${BUILDKITE_GIT_MIRRORS_PATH}/${repo_dir_leaf}"
 
 if has_git_commit "${mirror_dir}" "${BUILDKITE_COMMIT}"; then
@@ -54,6 +46,7 @@ else
     export WARM_CLONE="false"
 fi
 
-echo "Starting timer for experimental checkout"
-timestamp=$(date +%s)
-export CHECKOUT_START_TIME="$timestamp"
+echo "Starting timer for git checkout"
+timestamp
+timestamp="$(date +%s)"
+export CHECKOUT_START_TIME="${timestamp}"

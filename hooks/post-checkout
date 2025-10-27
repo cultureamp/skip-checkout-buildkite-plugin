@@ -1,33 +1,37 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-#
-# Output of this script is written to the agent log (Cloudwatch) only.
-#
+# Push git checkout data to Cloudwatch. Output is written to the Cloudwatch agent log.
 # It is NOT visible in the Buildkite UI.
-#
+send_git_checkout_data() {
+    local is_experimental="${1}"
+    local warm_clone="${2}"
+    local checkout_duration="${3}"
 
-function send_git_checkout_data () {
-  aws cloudwatch put-metric-data \
-    --namespace Buildkite \
-    --metric-name GitCheckoutDuration \
-    --region us-west-2 \
-    --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental="${IS_EXPERIMENTAL}",WarmClone="${WARM_CLONE:-unknown}" \
-    --value "$1" \
-    --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    aws cloudwatch put-metric-data \
+        --namespace Buildkite \
+        --metric-name GitCheckoutDuration \
+        --region us-west-2 \
+        --dimensions Repo="${BUILDKITE_REPO}",Pipeline="${BUILDKITE_PIPELINE_SLUG}",IsExperimental="${is_experimental}",WarmClone="${warm_clone:-unknown}" \
+        --value "${checkout_duration}" \
+        --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 
 echo "Ending timer for checkout"
-echo "BUILDKITE_REPO=${BUILDKITE_REPO}"
-timestamp=$(date +%s)
-export CHECKOUT_END_TIME="$timestamp"
+timestamp
+timestamp="$(date +%s)"
+export CHECKOUT_END_TIME="${timestamp}"
 
-checkout_duration=$((CHECKOUT_END_TIME - CHECKOUT_START_TIME))
+checkout_duration
+checkout_duration="$((CHECKOUT_END_TIME - CHECKOUT_START_TIME))"
 
-if [ "${BUILDKITE_GIT_CLONE_FLAGS:-}" = "-v --dissociate" ]; then
-    IS_EXPERIMENTAL="false"
+
+if [[ "${BUILDKITE_GIT_CLONE_FLAGS:-}" == "-v --dissociate" ]]; then
+is_experimental="false"
 else
-    IS_EXPERIMENTAL="true"
+is_experimental="true"
 fi
 
-send_git_checkout_data "$checkout_duration"
+# Ignore SC2153, the variable is defined and exported in the pre-checkout hook
+# shellcheck disable=SC2153
+send_git_checkout_data "${is_experimental}" "${WARM_CLONE}" "${checkout_duration}"
